@@ -1876,7 +1876,7 @@ static void ack_kick(void *_completed)
 {
 }
 
-static int get_user_cpu_mask(unsigned long __user *user_mask_ptr, unsigned len,
+static int get_user_cpu_mask(void __user *user_mask_ptr, unsigned len,
 			     struct cpumask *new_mask)
 {
 	if (len < cpumask_size())
@@ -1889,24 +1889,23 @@ static int get_user_cpu_mask(unsigned long __user *user_mask_ptr, unsigned len,
 
 static inline long mshv_kick_cpus(void __user *user_arg)
 {
+	struct mshv_kick_cpus args = {};
 	struct cpumask cpus = {};
 	long ret;
-	u64 len = 0;
 
-	// read first 8 bytes from user that describes the overall len
-	ret = copy_from_user(&len, user_arg, sizeof(len)) ? -EFAULT : 0;
+	ret = copy_from_user(&args, user_arg, sizeof(args)) ? -EFAULT : 0;
 	if (ret)
 		return ret;
 
 	// read the cpu mask from the user with the specified len
-	ret = get_user_cpu_mask(user_arg + sizeof(len), len, &cpus);
+	ret = get_user_cpu_mask((void __user *)args.cpu_mask_ptr, args.len, &cpus);
 	if (ret)
 		return ret;
 
-	if (cpumask_empty(cpus))
+	if (cpumask_empty(&cpus))
 		return 0;
 
-	smp_call_function_many(cpus, ack_kick, NULL, true);
+	smp_call_function_many(&cpus, ack_kick, NULL, true);
 	return 0;
 }
 
