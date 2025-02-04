@@ -290,7 +290,7 @@ struct mshv_invlpgb {
 struct mshv_kick_cpus {
 	__u64 len;
 	__u64 cpu_mask_ptr;	/* pointer to cpu mask bits */
-}; __packed;
+} __packed;
 
 
 #define MSHV_IOCTL 0xB8
