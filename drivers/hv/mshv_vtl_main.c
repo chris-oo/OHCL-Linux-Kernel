@@ -1876,10 +1876,30 @@ static void ack_kick(void *_completed)
 {
 }
 
+static int get_user_cpu_mask(unsigned long __user *user_mask_ptr, unsigned len,
+			     struct cpumask *new_mask)
+{
+	if (len < cpumask_size())
+		cpumask_clear(new_mask);
+	else if (len > cpumask_size())
+		len = cpumask_size();
+
+	return copy_from_user(new_mask, user_mask_ptr, len) ? -EFAULT : 0;
+}
+
 static inline long mshv_kick_cpus(void __user *user_arg)
 {
 	struct cpumask cpus = {};
-	ret = copy_from_user(&cpus, user_arg, sizeof(cpus)) ? -EFAULT : 0;
+	long ret;
+	u64 len = 0;
+
+	// read first 8 bytes from user that describes the overall len
+	ret = copy_from_user(&len, user_arg, sizeof(len)) ? -EFAULT : 0;
+	if (ret)
+		return ret;
+
+	// read the cpu mask from the user with the specified len
+	ret = get_user_cpu_mask(user_arg + sizeof(len), len, &cpus);
 	if (ret)
 		return ret;
 

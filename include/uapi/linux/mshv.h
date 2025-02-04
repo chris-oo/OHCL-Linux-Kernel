@@ -286,6 +286,13 @@ struct mshv_invlpgb {
 	__u32 ecx;
 } __packed;
 
+
+struct mshv_kick_cpus {
+	__u64 len;
+	u8 mask[];
+}; __packed;
+
+
 #define MSHV_IOCTL 0xB8
 
 /* mshv device */
@@ -353,7 +360,7 @@ struct mshv_invlpgb {
 #define MSHV_VTL_TLBSYNC	_IO(MSHV_IOCTL, 0x37)
 
 // TODO: grouping?
-#define MSHV_VTL_KICK_CPU _IOR(MSHV_IOCTL, 0x38, struct cpumask)
+#define MSHV_VTL_KICK_CPU _IOW(MSHV_IOCTL, 0x38, struct mshv_kick_cpus)
 
 /* VMBus device IOCTLs */
 #define MSHV_SINT_SIGNAL_EVENT    _IOW(MSHV_IOCTL, 0x22, struct mshv_vtl_signal_event)
