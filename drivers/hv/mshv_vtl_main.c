@@ -1871,6 +1871,25 @@ static long mshv_vtl_ioctl_guest_vsm_vmsa_pfn(void __user *user_arg)
 }
 #endif
 
+// TODO right ifdefs
+static void ack_kick(void *_completed)
+{
+}
+
+static inline long mshv_kick_cpus(void __user *user_arg)
+{
+	struct cpumask cpus = {};
+	ret = copy_from_user(&cpus, user_arg, sizeof(cpus)) ? -EFAULT : 0;
+	if (ret)
+		return ret;
+
+	if (cpumask_empty(cpus))
+		return 0;
+
+	smp_call_function_many(cpus, ack_kick, NULL, true);
+	return 0;
+}
+
 static long
 mshv_vtl_ioctl(struct file *filp, unsigned int ioctl, unsigned long arg)
 {
@@ -1923,6 +1942,10 @@ mshv_vtl_ioctl(struct file *filp, unsigned int ioctl, unsigned long arg)
 		ret = mshv_vtl_ioctl_guest_vsm_vmsa_pfn((void __user *)arg);
 		break;
 #endif
+
+	case MSHV_VTL_KICK_CPU:
+		ret = mshv_vtl_ioctl_kick_cpu((void __user *)arg);
+		break;
 
 	default:
 		dev_err(vtl->module_dev, "invalid vtl ioctl: %#x\n", ioctl);
