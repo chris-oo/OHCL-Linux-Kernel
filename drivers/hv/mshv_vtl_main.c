@@ -1874,7 +1874,13 @@ static long mshv_vtl_ioctl_guest_vsm_vmsa_pfn(void __user *user_arg)
 // TODO right ifdefs
 static void ack_kick(void *_completed)
 {
-	pr_debug("CPU %d acked kick\n", smp_processor_id());
+	// BUGBUG needs to cancel current run right like mshv_vtl_cancel to bring into usermode?
+	// BUGBUG complains "using smp_processor_id() in preemptible code"
+	int cpu;
+	cpu = get_cpu();
+	pr_err("CPU %d acked kick\n", cpu);
+	WRITE_ONCE(mshv_vtl_this_run()->cancel, 1);
+	put_cpu();
 }
 
 static int get_user_cpu_mask(void __user *user_mask_ptr, unsigned len,
@@ -1893,6 +1899,8 @@ static inline long mshv_vtl_ioctl_kick_cpu(void __user *user_arg)
 	struct mshv_kick_cpus args = {};
 	struct cpumask cpus = {};
 	long ret;
+
+	pr_err("kicking cpus requested\n");
 
 	ret = copy_from_user(&args, user_arg, sizeof(args)) ? -EFAULT : 0;
 	if (ret)
