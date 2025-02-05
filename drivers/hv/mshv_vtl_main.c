@@ -1914,7 +1914,9 @@ static inline long mshv_vtl_ioctl_kick_cpu(void __user *user_arg)
 	if (cpumask_empty(&cpus))
 		return 0;
 
+	preempt_disable();
 	smp_call_function_many(&cpus, ack_kick, NULL, true);
+	preempt_enable();
 	return 0;
 }
 
