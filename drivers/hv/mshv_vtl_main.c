@@ -1891,6 +1891,8 @@ static int get_user_cpu_mask(void __user *user_mask_ptr, unsigned len,
 	else if (len > cpumask_size())
 		len = cpumask_size();
 
+	pr_err("cpu mask len: %d\n", len);
+
 	return copy_from_user(new_mask, user_mask_ptr, len) ? -EFAULT : 0;
 }
 
@@ -1913,6 +1915,8 @@ static inline long mshv_vtl_ioctl_kick_cpu(void __user *user_arg)
 
 	if (cpumask_empty(&cpus))
 		return 0;
+
+	pr_err("kicking following cpus %*pbl\n", cpumask_pr_args(&cpus));
 
 	preempt_disable();
 	smp_call_function_many(&cpus, ack_kick, NULL, true);
