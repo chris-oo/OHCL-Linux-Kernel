@@ -281,8 +281,19 @@ static void reduce_unnecessary_ve(void)
 {
 	u64 err = tdg_vm_wr(TDCS_TD_CTLS, TD_CTLS_REDUCE_VE, TD_CTLS_REDUCE_VE);
 
-	if (err == TDX_SUCCESS)
+	// if (err == TDX_SUCCESS)
+	// 	return;
+
+	if (err == TDX_SUCCESS) {
+		// HACK: enable cpuid bits
+		// abi json calls this FEATURE_PARAVIRT_CTLS but abi spec calls it FEATURE_PARAVIRT_CTRL
+		u64 FEATURE_PARAVIRT_CTLS = 0x9110000300000022ULL;
+		u64 CORE_CAPABILITIES = 0x1;
+		// u64 err = tdg_vm_wr(FEATURE_PARAVIRT_CTLS, CORE_CAPABILITIES, CORE_CAPABILITIES);
+		u64 err = tdg_vm_wr(0x9110000300000022, 0x7FF, 0x7FF);
+		pr_err("TDX: enabled FEATURE_PARAVIRT_CTLS, err=%llx\n", err);
 		return;
+	}
 
 	/*
 	 * Enabling REDUCE_VE includes ENUM_TOPOLOGY. Only try to
