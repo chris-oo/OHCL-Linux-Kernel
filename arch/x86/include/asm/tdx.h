@@ -77,6 +77,8 @@ u64 tdx_hcall_get_quote(u8 *buf, size_t size);
 void __init tdx_dump_attributes(u64 td_attr);
 void __init tdx_dump_td_ctls(u64 td_ctls);
 
+u64 tdx_mcall_key_get(u8 *indata, u8 *outdata);
+
 #else
 
 static inline void tdx_early_init(void) { };

@@ -347,12 +347,55 @@ static bool tdx_report_bin_attr_visible(int n)
 	return false;
 }
 
+static long tdx_key_get(struct tdx_key_get_req __user *req)
+{
+	u8 *indata = NULL, *outdata = NULL;
+	long ret = 0;
+	u64 err;
+
+	/* TDG.MR.KEY.GET TDCALL expects input buffer to be 128B aligned */
+	indata = kmalloc(ALIGN(sizeof(req->tdkeyreq), 128), GFP_KERNEL);
+	if (!indata)
+		return -ENOMEM;
+
+	/* TDG.MR.KEY.GET TDCALL expects input buffer to be 32B aligned */
+	outdata = kzalloc(ALIGN(sizeof(req->outkey), 32), GFP_KERNEL);
+	if (!outdata) {
+		ret = -ENOMEM;
+		goto out;
+	}
+
+	if (copy_from_user(indata, req->tdkeyreq, sizeof(req->tdkeyreq))) {
+		ret = -EFAULT;
+		goto out;
+	}
+
+	/* Get derived key using "TDG.MR.KEY.GET" TDCALL */
+	err = tdx_mcall_key_get(indata, outdata);
+	if (err) {
+		ret = -EIO;
+		if (copy_to_user(&req->err_code, &err, sizeof(u64)))
+			ret = -EFAULT;
+		goto out;
+	}
+
+	if (copy_to_user(&req->outkey, outdata, sizeof(req->outkey)))
+		ret = -EFAULT;
+
+out:
+	kfree(indata);
+	kfree(outdata);
+	return ret;
+}
+
 static long tdx_guest_ioctl(struct file *file, unsigned int cmd,
 			    unsigned long arg)
 {
 	switch (cmd) {
 	case TDX_CMD_GET_REPORT0:
 		return tdx_get_report0((struct tdx_report_req __user *)arg);
+	case TDX_CMD_KEY_GET:
+		return tdx_key_get((struct tdx_key_get_req __user *)arg);
 	default:
 		return -ENOTTY;
 	}
