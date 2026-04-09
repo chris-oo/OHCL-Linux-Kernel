@@ -170,6 +170,50 @@ static inline void kvm_lapic_set_irr(int vec, struct kvm_lapic *apic)
 	apic->irr_pending = true;
 }
 
+/*
+ * Compatibility wrappers: the helpers were moved to asm/apic.h and renamed
+ * from kvm_lapic_* to apic_*. These wrappers keep the KVM source compiling.
+ */
+static inline u32 __kvm_lapic_get_reg(char *regs, int reg_off)
+{
+	return apic_get_reg(regs, reg_off);
+}
+
+static inline u32 kvm_lapic_get_reg(struct kvm_lapic *apic, int reg_off)
+{
+	return apic_get_reg(apic->regs, reg_off);
+}
+
+static inline void __kvm_lapic_set_reg(char *regs, int reg_off, u32 val)
+{
+	apic_set_reg(regs, reg_off, val);
+}
+
+static inline void kvm_lapic_set_reg(struct kvm_lapic *apic, int reg_off, u32 val)
+{
+	apic_set_reg(apic->regs, reg_off, val);
+}
+
+static __always_inline u64 __kvm_lapic_get_reg64(char *regs, int reg)
+{
+	return apic_get_reg64(regs, reg);
+}
+
+static __always_inline u64 kvm_lapic_get_reg64(struct kvm_lapic *apic, int reg)
+{
+	return apic_get_reg64(apic->regs, reg);
+}
+
+static __always_inline void __kvm_lapic_set_reg64(char *regs, int reg, u64 val)
+{
+	apic_set_reg64(regs, reg, val);
+}
+
+static __always_inline void kvm_lapic_set_reg64(struct kvm_lapic *apic, int reg, u64 val)
+{
+	apic_set_reg64(apic->regs, reg, val);
+}
+
 DECLARE_STATIC_KEY_FALSE(kvm_has_noapic_vcpu);
 
 static inline bool lapic_in_kernel(struct kvm_vcpu *vcpu)
